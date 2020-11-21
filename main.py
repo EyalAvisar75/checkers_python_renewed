@@ -244,35 +244,19 @@ class RunGame:
 
 
 
-    # def check_continuation_jump(self):
-    #     if not game.is_jump: return
-    #     print("check_continuation_jump", self.last_move)
-    #     # self.is_red_turn = not self.is_red_turn
-    #     self.all_moves = []
-    #     if self.last_move != "" and len(self.last_move) > 0:
-    #         square, row = self.last_move[0], self.last_move[1]
-    #     else: return
-    #     piece = pieces[square][row]
-    #
-    #     if 'redman' in piece['type'] and self.is_red_turn:
-    #         square, row = piece['position'][0], piece['position'][1]
-    #         self.moves = []
-    #         self.moves.append((square, row))
-    #         self.add_jump_red(square, row)
-    #         if len(self.moves) > 1:
-    #             self.all_moves += self.moves
-    #             print("from square row ", square, row)
-    #             print("red all moves", self.all_moves)
-    #
-    #     elif 'blackman' in piece['type'] and not self.is_red_turn:
-    #         square, row = piece['position'][0], piece['position'][1]
-    #         self.moves = []
-    #         self.moves.append((square, row))
-    #         self.add_jump_black(square, row)
-    #         if len(self.moves) > 1:
-    #             self.all_moves += self.moves
-    #             print("from square row ", square, row)
-    #             print("black all moves", self.all_moves)
+    def check_continuation_jump(self, line, square):
+        piece = pieces[line][square]
+        if self.is_red_turn and "red" in piece['type']:
+            self.add_jump_red(line, square)
+            if 'redman black' in piece['type']:
+                self.add_jump_black(line, square, type='redman')
+        if not self.is_red_turn and "black" in piece['type']:
+            self.add_jump_black(line, square)
+            if 'blackman red' in piece['type']:
+                self.add_jump_red(line, square, type='blackman')
+
+        if len(self.all_moves):
+            return True
 
 
 pygame.init()
@@ -288,6 +272,14 @@ def highlight_mandatory_moves():
     for move in game.all_moves:
         if pieces[move[1]][move[0]]['type'] == "":
             board.set_square_color(move)
+
+
+def rerun():
+    global completed_move
+    board.draw_board()
+    game.add_pieces(board, pieces)
+    completed_move = False
+    pygame.display.update()
 
 
 while True:
@@ -308,9 +300,14 @@ while True:
 
                     if game.confirmed_move((line, square)):
                         game.all_moves = []
-                        game.change_turn()
-                        print("before events moves allmoves", game.moves, game.all_moves)
-                        print("turn changed red", game.is_red_turn)
+                        if(game.check_continuation_jump(line, square)):
+                            game.moves = game.all_moves.copy()
+                            rerun()
+                        else:
+                            game.change_turn()
+
+                    print("before events moves allmoves", game.moves, game.all_moves)
+                    print("turn changed red", game.is_red_turn)
                     board.reset_color()
             elif game.moves is not None and len(game.moves) > 0:
                 print("if allmoves is empty", game.moves, game.all_moves)
@@ -340,8 +337,6 @@ while True:
                     print("allmoves not empty moves allmoves", game.moves, game.all_moves)
                     highlight_mandatory_moves()
 
-
-    board.draw_board()
-    game.add_pieces(board, pieces)
-    completed_move = False
-    pygame.display.update()
+    if len(game.all_moves) > 1:
+        highlight_mandatory_moves()
+    rerun()
