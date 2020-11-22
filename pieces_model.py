@@ -44,9 +44,9 @@ class Pieces:
         if self.__pieces[square[1]][square[0]]['position'] == []:
             piece = self.__pieces[square[1]][square[0]]
             piece['position'] = [square[1], square[0]]
-            if mantype == 'redman':
+            if mantype == 'redman' or mantype == 'redman black king':
                 piece['image'] = pygame.image.load('venv/resources/red_piece.png')
-            elif mantype == 'blackman':
+            elif mantype == 'blackman' or mantype == 'blackman red king':
                 piece['image'] = pygame.image.load('venv/resources/black_piece.png')
             elif mantype == 'redman black':
                 piece['image'] = pygame.image.load('venv/resources/red_king.png')
@@ -88,12 +88,12 @@ class Pieces:
         return (black_count, red_count)
 
     def crown(self, piece):
-        if piece['type'] == 'blackman':
+        if 'blackman' in piece['type']:
             piece['type'] = 'blackman red'
             piece['image'] = pygame.image.load('venv/resources/black_king.png')
             piece['image'] = pygame.transform.scale(piece['image'],
                                                     (60, 60))
-        if piece['type'] == 'redman':
+        if 'redman' in piece['type']:
             piece['type'] = 'redman black'
             piece['image'] = pygame.image.load('venv/resources/red_king.png')
             piece['image'] = pygame.transform.scale(piece['image'],
