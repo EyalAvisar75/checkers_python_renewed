@@ -69,8 +69,12 @@ class Board:
                 if self.__board_squares[col][line]['color'] == (255,0,0):
                     self.__board_squares[col][line]['color'] = self.__square_color2
 
-    def set_square_color(self, square):
-        self.__board_squares[square[1]][square[0]]['color'] = 255,0,0
+    def set_square_color(self, square, color=''):
+        if color == '':
+            color = 255,0,0
+        else:
+            color = 0,0,255
+        self.__board_squares[square[1]][square[0]]['color'] = color
 
     def get_square_color(self, square):
         return self.__board_squares[square[1]][square[0]]['color']

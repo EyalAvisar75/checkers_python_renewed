@@ -15,7 +15,6 @@ class RunGame:
         self.is_red_turn = True
         # self.is_jump = False
         self.last_move = ""
-        self.is_move_completed = True
 
     def end_game(self):
         pygame.display.quit()
@@ -25,6 +24,7 @@ class RunGame:
         for index_row in range(8):
             for index_column in range(8):
                 if piecesmodel[index_row][index_column]['image'] is not None:
+                    # boardview.set_square_color((index_column, index_row), color='b')
                     boardview.get_window_surface(). \
                         blit(piecesmodel[index_row][index_column]['image'],
                              boardview.get_board_squares()[index_row][index_column]['rect'])
@@ -167,6 +167,7 @@ class RunGame:
                     self.moves.append((line - 1, square + 1))
 
     def add_jump_red(self, square, line, type='redman'):
+        print("in jump piece", pieces[square][line])
         attacked_piece = 'blackman' if type == 'redman' else 'redman'
 
         if line < 2: return
@@ -197,6 +198,7 @@ class RunGame:
                     self.moves.append((line + 1, square + 1))
 
     def add_jump_black(self, square, line, type="blackman"):
+        print("in jump piece", pieces[square][line])
         attacked_piece = 'blackman' if type == 'redman' else 'redman'
 
         if line > 5: return
@@ -228,6 +230,8 @@ class RunGame:
         for line in range(8):
             for square in range(8):
                 piece = pieces[line][square]
+                rerun()
+                # print("mandatory, touched, piece", self.touched ,piece)
                 if piece['type'] != "":
                     if self.is_red_turn and "red" in piece['type']:
                         if 'blackman red' in piece['type']:
@@ -245,17 +249,24 @@ class RunGame:
 
 
     def check_continuation_jump(self, line, square):
+        print("in continuation piece", pieces[line][square])
+        print("lists", self.moves, self.all_moves)
+        print("move from", line,square)
+        line,square = square,line
+        rerun()
         piece = pieces[line][square]
-        if self.is_red_turn and "red" in piece['type']:
+        print("with piece", piece)
+
+        if self.is_red_turn: # and "red" in piece['type']
             self.add_jump_red(line, square)
             if 'redman black' in piece['type']:
                 self.add_jump_black(line, square, type='redman')
-        if not self.is_red_turn and "black" in piece['type']:
+        if not self.is_red_turn: # and "black" in piece['type']
             self.add_jump_black(line, square)
             if 'blackman red' in piece['type']:
                 self.add_jump_red(line, square, type='blackman')
 
-        if len(self.all_moves):
+        if len(self.all_moves) > 0:
             return True
 
 
@@ -264,7 +275,6 @@ game = RunGame()
 board = Board()
 piece_model = Pieces()
 pieces = piece_model.get_model()
-completed_move = False
 board.create_board()
 
 
@@ -275,10 +285,8 @@ def highlight_mandatory_moves():
 
 
 def rerun():
-    global completed_move
     board.draw_board()
     game.add_pieces(board, pieces)
-    completed_move = False
     pygame.display.update()
 
 
@@ -291,6 +299,7 @@ while True:
             print("start events moves allmoves", game.moves, game.all_moves)
             if len(game.all_moves) > 1:
                 line, square = board.touched_square(event)
+                game.touched = line, square
                 if (line,square) in game.all_moves:
                     index = game.all_moves.index((line,square))
                     if index % 2 == 0:
@@ -300,8 +309,11 @@ while True:
 
                     if game.confirmed_move((line, square)):
                         game.all_moves = []
+                        print("before continuation touched, line square",
+                              game.touched, line, square)
                         if(game.check_continuation_jump(line, square)):
                             game.moves = game.all_moves.copy()
+                            print("moves in condition", game.moves)
                             rerun()
                         else:
                             game.change_turn()
@@ -312,6 +324,7 @@ while True:
             elif game.moves is not None and len(game.moves) > 0:
                 print("if allmoves is empty", game.moves, game.all_moves)
                 line, square = board.touched_square(event)
+                game.touched = line, square
                 if board.get_square_color((line, square)) == (255,0,0):
                     print("playing", (line, square))
                     if game.confirmed_move((line, square)):
@@ -324,6 +337,7 @@ while True:
             else:
                 print("if moves, allmoves are empty", game.moves, game.all_moves)
                 line, square = board.touched_square(event)
+                game.touched = line,square
                 piece_model.get_piece((line,square))
                 game.touched = line,square
                 print("touched", line, square)
