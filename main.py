@@ -1,7 +1,12 @@
 from board_view import *
 from pieces_model import *
 
-# when taking in a row allow take backward for regular pieces too
+# check for possible move: run over all the pieces,
+# if piece is of the right color offer moves with compute trajectory
+# check if move is feasible, if so break loop
+# call check tie from else part of the game loop
+# fix bug: if two pieces can jump to the same spot
+# set first mandatory move as the one touched
 # logic module better be imported from a different file
 
 class RunGame:
@@ -136,10 +141,11 @@ class RunGame:
 
     def change_turn(self):
         self.is_red_turn = not self.is_red_turn
+        game.check_possible_moves()
         print(f"turn changed red {self.is_red_turn}")
 
 
-    def check_game_status(self):
+    def check_win(self):
         black_count, red_count = piece_model.count_colors()
         pygame.display.update()
         if black_count == 0:
@@ -228,7 +234,7 @@ class RunGame:
             for square in range(8):
                 piece = pieces[line][square]
                 rerun()
-                # print("mandatory, touched, piece", self.touched ,piece)
+
                 if piece['type'] != "":
                     if self.is_red_turn and "red" in piece['type']:
                         if 'blackman red' in piece['type']:
@@ -243,6 +249,34 @@ class RunGame:
                         if 'blackman red' in piece['type']:
                             self.add_jump_red(line, square, type='blackman')
 
+
+    def check_possible_moves(self):
+        if len(game.all_moves) > 0 or (game.moves is not None and len(game.all_moves) > 0):
+            return
+
+        for line in range(8):
+            for square in range(8):
+                piece = pieces[line][square]
+                rerun()
+
+                if piece['type'] != "":
+                    if self.is_red_turn and "red" in piece['type']:
+                        if 'blackman red' in piece['type']:
+                            continue
+                        self.add_advance_red(line, square)
+                        if 'redman black' in piece['type']:
+                            self.add_advance_black(line, square)
+                    if not self.is_red_turn and "black" in piece['type']:
+                        if 'redman black' in piece['type']:
+                            continue
+                        self.add_advance_black(line, square)
+                        if 'blackman red' in piece['type']:
+                            self.add_advance_red(line, square)
+            if len(self.moves) > 0:
+                self.moves = []
+                return
+        print("game is tie")
+        game.end_game()
 
 
     def check_continuation_jump(self, line, square):
@@ -322,7 +356,8 @@ def rerun():
 
 
 while True:
-    game.check_game_status()
+    game.check_win()
+
     for event in pygame.event.get():
         if event.type == QUIT:
             game.end_game()
@@ -350,35 +385,25 @@ while True:
                     # print("turn changed red", game.is_red_turn)
                     board.reset_color()
             elif game.moves is not None and len(game.moves) > 0:
-                # print("if allmoves is empty", game.moves, game.all_moves)
                 line, square = board.touched_square(event)
                 print("touched" ,pieces[line][square]['type'])
                 game.touched = line, square
                 if board.get_square_color((line, square)) == (255,0,0):
-                    # print("playing", (line, square))
                     if game.confirmed_move((line, square)):
                         game.change_turn()
-                        # print("turn changed red", game.is_red_turn)
                     board.reset_color()
                 else:
-                    # print("if allmoves empty and pressed nonred square", game.moves, game.all_moves)
                     game.moves = game.offer_move(line, square)
             else:
-                # print("if moves, allmoves are empty", game.moves, game.all_moves)
                 line, square = board.touched_square(event)
                 print("touched" ,pieces[line][square]['type'])
                 game.touched = line,square
                 piece_model.get_piece((line,square))
                 game.touched = line,square
-                # print("touched", line, square)
                 game.check_mandatory_moves()
-                # print("all moves after mandatory_move", game.all_moves)
-                # game.all_moves = []
                 if game.all_moves == []:
-                    # print("mandatory returned [] moves allmoves", game.moves, game.all_moves)
                     game.moves = game.offer_move(line, square)
                 else:
-                    # print("allmoves not empty moves allmoves", game.moves, game.all_moves)
                     highlight_mandatory_moves()
 
     if len(game.all_moves) > 1:
