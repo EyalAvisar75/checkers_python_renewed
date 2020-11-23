@@ -66,7 +66,7 @@ class Board:
     def reset_color(self):
         for col in range(8):
             for line in range(8):
-                if self.__board_squares[col][line]['color'] == (255,0,0):
+                if self.__board_squares[col][line]['color'] == (255,0,0) or self.__board_squares[col][line]['color'] == (0,0,255):
                     self.__board_squares[col][line]['color'] = self.__square_color2
 
     def set_square_color(self, square, color=''):

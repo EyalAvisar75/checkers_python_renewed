@@ -116,7 +116,8 @@ class RunGame:
         if move_input not in self.moves[1:]: return
         if len(self.moves) < 2: return
 
-        self.compute_trajectory(move_input)
+        if not board.get_square_color((line, square)) == (0, 0, 255):
+            self.compute_trajectory(move_input)
 
         if move_input in self.moves[1:]:
             board.reset_color()
@@ -211,6 +212,7 @@ class RunGame:
                     and pieces[square - 2][line + 2]['type'] == "":
                 self.all_moves.append((line, square))
                 self.all_moves.append((line + 2, square - 2))
+
         if square < 6:
             if attacked_piece in pieces[square + 1][line + 1]['type'] \
                     and pieces[square + 2][line + 2]['type'] == "":
@@ -280,16 +282,16 @@ class RunGame:
 
 
     def check_continuation_jump(self, line, square):
-        print("in continuation piece", pieces[line][square])
-        print("lists", self.moves, self.all_moves)
-        print("move from", line,square)
+        # print("in continuation piece", pieces[line][square])
+        # print("lists", self.moves, self.all_moves)
+        # print("move from", line,square)
         self.check_coronation()
 
         line,square = square,line
         piece = pieces[line][square]
         # print("with piece", piece)
 
-        print("coronation", self.is_coronation)
+        # print("coronation", self.is_coronation)
         if self.is_red_turn and not self.is_coronation: #
             if piece['type'] == 'redman':
                 piece['type'] = 'redman black king'
@@ -299,7 +301,7 @@ class RunGame:
             if piece['type'] == 'redman black king':
                 piece['type'] = 'redman'
 
-        if not self.is_red_turn and not self.is_coronation:#and not self.is_coronation
+        if not self.is_red_turn and not self.is_coronation:
             if piece['type'] == 'blackman':
                 piece['type'] = 'blackman red king'
             self.add_jump_black(line, square)
@@ -320,19 +322,15 @@ class RunGame:
             return False
 
     def check_coronation(self):
-        print("checking coronation")
+        # print("checking coronation")
         for index in range(8):
-            print("at", index, 0)
-            print(pieces[index][0]['type'])
-            print(pieces[index][0]['position'])
-            print(pieces[index][7]['type'])
-            print(pieces[index][7]['position'])
+            # print("at", index, 0)
+            # print(pieces[index][0]['type'])
+            # print(pieces[index][0]['position'])
+            # print(pieces[index][7]['type'])
+            # print(pieces[index][7]['position'])
             if  pieces[index][0]['type'] == 'redman 'or pieces[index][7]['type'] == 'blackman':
                 self.is_coronation = True
-                # if self.is_red_turn:
-                #     pieces[index][0]['type'] = 'redman black'
-                # else:
-                #     pieces[index][7]['type'] = 'blackman red'
 
 
 pygame.init()
@@ -344,6 +342,11 @@ board.create_board()
 
 
 def highlight_mandatory_moves():
+    for index in range(3, len(game.all_moves), 2):
+        if game.all_moves[index] in game.all_moves[:index]:
+            board.set_square_color(game.all_moves[index - 1], 'blue')
+            board.set_square_color(game.all_moves[index - 3], 'blue')
+
     for move in game.all_moves:
         if pieces[move[1]][move[0]]['type'] == "":
             board.set_square_color(move)
@@ -363,9 +366,11 @@ while True:
             game.end_game()
         if event.type == MOUSEBUTTONUP:
             if len(game.all_moves) > 1:
+                print("start loop all moves",game.all_moves)
                 line, square = board.touched_square(event)
                 print("touched" ,pieces[line][square]['type'])
                 game.touched = line, square
+
                 if (line,square) in game.all_moves:
                     index = game.all_moves.index((line,square))
                     if index % 2 == 0:
@@ -373,6 +378,19 @@ while True:
                     else:
                         game.moves = [game.all_moves[index-1],game.all_moves[index]]
 
+                    print("touched 1", game.touched)
+                    print(board.get_square_color(game.touched))
+                    print("confirmed 1")
+                    if board.get_square_color((line, square)) == (0, 0, 255):
+                        print("here1")
+                        index = game.all_moves.index((line, square))
+                        game.moves = [game.all_moves[index], game.all_moves[index + 1]]
+                        line, square = game.all_moves[index + 1]
+                    else:
+                        if (line,square) in game.all_moves:
+                            index = game.all_moves.index((line, square)) - 1
+                            if board.get_square_color(game.all_moves[index]) == (0, 0, 255):
+                                continue
                     if game.confirmed_move((line, square)):
                         game.all_moves = []
                         if(game.check_continuation_jump(line, square)):
@@ -388,7 +406,15 @@ while True:
                 line, square = board.touched_square(event)
                 print("touched" ,pieces[line][square]['type'])
                 game.touched = line, square
-                if board.get_square_color((line, square)) == (255,0,0):
+                if board.get_square_color((line, square)) == (0,0,255):
+                    print("here2")
+                    index = game.all_moves.index((line, square))
+                    game.moves = [game.all_moves[index], game.all_moves[index+1]]
+                    if game.confirmed_move((line, square)):
+                        game.change_turn()
+                    board.reset_color()
+
+                elif board.get_square_color((line, square)) == (255,0,0):
                     if game.confirmed_move((line, square)):
                         game.change_turn()
                     board.reset_color()
