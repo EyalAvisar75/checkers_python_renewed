@@ -18,8 +18,6 @@ class RunGame:
         self.all_moves = []
         self.mantype = ""
         self.is_red_turn = True
-        # self.is_jump = False
-        self.last_move = ""
 
     def end_game(self):
         pygame.display.quit()
@@ -70,12 +68,9 @@ class RunGame:
                 line_difference = move[0] - self.moves[0][0]
                 if line_difference == 2 or line_difference == -2:
                     is_jumping_offered = True
-                    # self.is_jump = True
 
             if is_jumping_offered:
                 self.filter_jumps()
-            # if is_jumping_offered and self.is_jump:
-            #     print("multi jumps on the way")
 
             for move in self.moves[1:]:
                 board.set_square_color(move)
@@ -108,8 +103,6 @@ class RunGame:
             return True
         if not self.is_red_turn and 'blackman' in pieces[line][square]['type']:
             return True
-        # output = "black" if 'blackman' in pieces[line][square]['type'] else "red"
-        # print(output)
         return False
 
     def confirmed_move(self, move_input):
@@ -280,19 +273,16 @@ class RunGame:
         print("game is tie")
         game.end_game()
 
-
     def check_continuation_jump(self, line, square):
-        # print("in continuation piece", pieces[line][square])
-        # print("lists", self.moves, self.all_moves)
-        # print("move from", line,square)
         self.check_coronation()
 
         line,square = square,line
         piece = pieces[line][square]
-        # print("with piece", piece)
 
-        # print("coronation", self.is_coronation)
-        if self.is_red_turn and not self.is_coronation: #
+        if self.is_coronation:
+            print("coronation", self.is_coronation)
+
+        if self.is_red_turn and not self.is_coronation:
             if piece['type'] == 'redman':
                 piece['type'] = 'redman black king'
             self.add_jump_red(line, square)
@@ -322,14 +312,8 @@ class RunGame:
             return False
 
     def check_coronation(self):
-        # print("checking coronation")
         for index in range(8):
-            # print("at", index, 0)
-            # print(pieces[index][0]['type'])
-            # print(pieces[index][0]['position'])
-            # print(pieces[index][7]['type'])
-            # print(pieces[index][7]['position'])
-            if  pieces[index][0]['type'] == 'redman 'or pieces[index][7]['type'] == 'blackman':
+            if pieces[index][0]['type'] == 'redman' or pieces[index][7]['type'] == 'blackman':
                 self.is_coronation = True
 
 
@@ -378,11 +362,7 @@ while True:
                     else:
                         game.moves = [game.all_moves[index-1],game.all_moves[index]]
 
-                    print("touched 1", game.touched)
-                    print(board.get_square_color(game.touched))
-                    print("confirmed 1")
                     if board.get_square_color((line, square)) == (0, 0, 255):
-                        print("here1")
                         index = game.all_moves.index((line, square))
                         game.moves = [game.all_moves[index], game.all_moves[index + 1]]
                         line, square = game.all_moves[index + 1]
